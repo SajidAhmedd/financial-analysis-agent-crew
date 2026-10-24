@@ -7,10 +7,10 @@ WHY THIS FILE EXISTS:
 - Provides default values for optional settings
 - Makes it easy to change settings without modifying code
 
-SWITCHED TO GROQ:
-- Faster inference (Groq's specialty)
-- More generous rate limits (30 req/min free)
-- LLaMA 3.1 70B provides excellent quality
+LLM PROVIDERS:
+- Mistral, Groq and Google Gemini all have free tiers
+- LLM_PROVIDERS sets the order they are tried in; if one is rate-limited or
+  down, the request falls back to the next (see config/llm_client.py)
 """
 
 import os
@@ -24,11 +24,11 @@ load_dotenv()
 # API KEYS
 # =============================================================================
 
-# Groq API Key - Used by agents for reasoning and text generation
-# Get yours free at: https://console.groq.com
+# LLM providers, tried in this order (only those with an API key are used)
+# Free keys: https://console.mistral.ai  https://console.groq.com  https://aistudio.google.com/apikey
+LLM_PROVIDERS = os.getenv("LLM_PROVIDERS", "mistral,groq,gemini")
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-# Legacy: Gemini API Key (keeping for backward compatibility)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # NewsAPI Key - Used by Market Researcher for fetching news
@@ -38,17 +38,8 @@ NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 # MODEL SETTINGS
 # =============================================================================
 
-# Groq Model - LLaMA 3.3 70B is the latest and best
-GROQ_MODEL = "llama-3.3-70b-versatile"
-
-# Alternative Groq models you can use:
-# - "llama-3.3-70b-versatile"   # Latest, best quality (recommended)
-# - "llama-3.1-8b-instant"      # Fastest, good for simple tasks
-# - "llama3-70b-8192"           # Previous version, stable
-# - "mixtral-8x7b-32768"        # Good balance of speed/quality
-
-# Legacy Gemini model
-GEMINI_MODEL = "gemini-2.0-flash"
+# Models per provider (override with MISTRAL_MODEL / GROQ_MODEL / GEMINI_MODEL)
+# Defaults live in config/llm_client.py: mistral-small-latest, openai/gpt-oss-20b, gemini-flash-latest
 
 # =============================================================================
 # OTHER SETTINGS
@@ -66,28 +57,17 @@ def validate_config():
     Check that required configuration is present.
     Call this at app startup to fail fast if something is missing.
     """
-    errors = []
-    warnings = []
+    from config.llm_client import configured_providers
 
-    if not GROQ_API_KEY:
-        errors.append("GROQ_API_KEY is missing. Get one free at https://console.groq.com")
-
-    if not GEMINI_API_KEY:
-        warnings.append("GEMINI_API_KEY is missing (optional - using Groq instead)")
-
-    if errors:
+    providers = configured_providers(LLM_PROVIDERS)
+    if not providers:
         print("=" * 50)
-        print("CONFIGURATION ERRORS:")
-        for error in errors:
-            print(f"  - {error}")
+        print("CONFIGURATION ERROR:")
+        print("  - No LLM API key found. Set at least one of MISTRAL_API_KEY, GROQ_API_KEY or GEMINI_API_KEY.")
         print("=" * 50)
         return False
 
-    if warnings:
-        for warning in warnings:
-            print(f"  Note: {warning}")
-
-    print("Configuration loaded successfully! (Using Groq API)")
+    print(f"Configuration loaded successfully! (LLM providers: {', '.join(providers)})")
     return True
 
 

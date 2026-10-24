@@ -17,14 +17,14 @@ INPUTS FROM OTHER AGENTS:
 - Market Researcher: news_data, sentiment, ai_analysis
 - Data Analyst: metrics, stats, charts, ai_analysis
 
-LLM: Groq (LLaMA 3.1 70B) - Fast and high quality
+LLM: Mistral / Groq / Gemini with automatic fallback (config/llm_client.py)
 
 OPTIMIZATION:
 - Uses a SINGLE LLM call for all content to minimize latency
 - Parses response to extract executive summary, analysis, and recommendations
 """
 
-from groq import Groq
+from config.llm_client import LLMClient
 from typing import Dict, Any, Optional
 from datetime import datetime
 import time
@@ -37,7 +37,7 @@ import os
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
-from config.settings import GROQ_API_KEY, GROQ_MODEL, AGENT_SETTINGS
+from config.settings import AGENT_SETTINGS
 from tools.pdf_tools import generate_report
 
 # AGENT CLASS
@@ -64,17 +64,14 @@ class ReportWriterAgent:
         self.role = settings.get('role', 'Financial Report Writer')
         self.goal = settings.get('goal', 'Synthesize research into professional reports')
 
-        # Initialize Groq client
-        if not GROQ_API_KEY:
-            raise ValueError("GROQ_API_KEY not found. Get one free at https://console.groq.com")
-
-        self.client = Groq(api_key=GROQ_API_KEY)
-        self.model = GROQ_MODEL
+        # LLM client - tries each provider in LLM_PROVIDERS in order (see config/llm_client.py)
+        self.client = LLMClient()
+        self.model = self.client.model
 
         # Conversation history for context
         self.conversation_history = []
 
-        # Retry settings (Groq has generous limits, but just in case)
+        # Retry settings (on top of the provider fallback in LLMClient)
         self.max_retries = 3
         self.retry_delay = 2  # seconds
 
@@ -479,7 +476,7 @@ This analysis provides a data-driven overview of {company_name}'s current financ
 # TEST CODE
 if __name__ == "__main__":
     print("=" * 60)
-    print("TESTING REPORT WRITER AGENT (Groq)")
+    print("TESTING REPORT WRITER AGENT")
     print("=" * 60)
 
     # Import other agents to get real data

@@ -14,10 +14,10 @@ TOOLS IT USES:
 - news_tools.search_stock_news()
 - news_tools.analyze_sentiment()
 
-LLM: Groq (LLaMA 3.1 70B) - Fast and high quality
+LLM: Mistral / Groq / Gemini with automatic fallback (config/llm_client.py)
 """
 
-from groq import Groq
+from config.llm_client import LLMClient
 from typing import Dict, Any, Optional
 from datetime import datetime
 import json
@@ -28,7 +28,7 @@ import os
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
-from config.settings import GROQ_API_KEY, GROQ_MODEL, AGENT_SETTINGS
+from config.settings import AGENT_SETTINGS
 from tools.news_tools import search_stock_news, analyze_sentiment
 
 # AGENT CLASS
@@ -56,12 +56,9 @@ class MarketResearcherAgent:
         self.role = settings.get('role', 'Market Research Analyst')
         self.goal = settings.get('goal', 'Gather and analyze market news')
 
-        # Initialize Groq client
-        if not GROQ_API_KEY:
-            raise ValueError("GROQ_API_KEY not found. Get one free at https://console.groq.com")
-
-        self.client = Groq(api_key=GROQ_API_KEY)
-        self.model = GROQ_MODEL
+        # LLM client - tries each provider in LLM_PROVIDERS in order (see config/llm_client.py)
+        self.client = LLMClient()
+        self.model = self.client.model
 
         # Conversation history for context
         self.conversation_history = []
@@ -99,7 +96,7 @@ Always be objective and professional in your analysis."""
 
         WHAT IT DOES:
         1. Uses news_tools to fetch articles
-        2. Uses Groq to analyze and summarize
+        2. Uses the LLM to analyze and summarize
         3. Returns structured findings
 
         PARAMETERS:
@@ -125,7 +122,7 @@ Always be objective and professional in your analysis."""
         # Step 2: Prepare data for LLM analysis
         news_summary = self._format_news_for_analysis(news_data)
 
-        # Step 3: Use Groq to analyze the news
+        # Step 3: Use the LLM to analyze the news
         self.log("Analyzing news with AI...")
         ai_analysis = self._analyze_with_llm(ticker, company_name, news_summary, news_data)
 
@@ -169,7 +166,7 @@ Always be objective and professional in your analysis."""
         news_data: Dict[str, Any]
     ) -> Dict[str, str]:
         """
-        Use Groq to analyze the news and provide insights.
+        Use the LLM to analyze the news and provide insights.
 
         WHAT THE LLM DOES:
         1. Reads the news summary
@@ -279,7 +276,7 @@ Be concise, professional, and objective in your analysis."""
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("TESTING MARKET RESEARCHER AGENT (Groq)")
+    print("TESTING MARKET RESEARCHER AGENT")
     print("=" * 60)
 
     # Create the agent

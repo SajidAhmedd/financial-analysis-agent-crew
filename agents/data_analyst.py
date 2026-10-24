@@ -14,10 +14,10 @@ TOOLS IT USES:
 - finance_tools (all functions)
 - chart_tools (all functions)
 
-LLM: Groq (LLaMA 3.1 70B) - Fast and high quality
+LLM: Mistral / Groq / Gemini with automatic fallback (config/llm_client.py)
 """
 
-from groq import Groq
+from config.llm_client import LLMClient
 from typing import Dict, Any, Optional
 from datetime import datetime
 import json
@@ -28,7 +28,7 @@ import os
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
-from config.settings import GROQ_API_KEY, GROQ_MODEL, AGENT_SETTINGS
+from config.settings import AGENT_SETTINGS
 from tools.finance_tools import (
     get_company_info,
     get_key_metrics,
@@ -64,12 +64,9 @@ class DataAnalystAgent:
         self.role = settings.get('role', 'Financial Data Analyst')
         self.goal = settings.get('goal', 'Analyze stock data and create visualizations')
 
-        # Initialize Groq client
-        if not GROQ_API_KEY:
-            raise ValueError("GROQ_API_KEY not found. Get one free at https://console.groq.com")
-
-        self.client = Groq(api_key=GROQ_API_KEY)
-        self.model = GROQ_MODEL
+        # LLM client - tries each provider in LLM_PROVIDERS in order (see config/llm_client.py)
+        self.client = LLMClient()
+        self.model = self.client.model
 
         # Conversation history for context
         self.conversation_history = []
@@ -114,7 +111,7 @@ Always be objective and base your analysis on the actual data provided."""
         WHAT IT DOES:
         1. Fetches all financial data using finance_tools
         2. Creates charts using chart_tools
-        3. Uses Groq to interpret the data
+        3. Uses the LLM to interpret the data
         4. Returns structured analysis with chart paths
 
         PARAMETERS:
@@ -167,7 +164,7 @@ Always be objective and base your analysis on the actual data provided."""
             price_stats=price_stats
         )
 
-        # Step 6: Use Groq to analyze the data
+        # Step 6: Use the LLM to analyze the data
         self.log("Analyzing data with AI...")
         ai_analysis = self._analyze_with_llm(ticker, company_name, formatted_data)
 
@@ -265,7 +262,7 @@ Always be objective and base your analysis on the actual data provided."""
         formatted_data: str
     ) -> Dict[str, str]:
         """
-        Use Groq to analyze the financial data.
+        Use the LLM to analyze the financial data.
 
         WHAT THE LLM DOES:
         1. Interprets the financial metrics
@@ -378,7 +375,7 @@ Be precise with numbers and provide context for the metrics."""
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("TESTING DATA ANALYST AGENT (Groq)")
+    print("TESTING DATA ANALYST AGENT")
     print("=" * 60)
 
     # Create the agent

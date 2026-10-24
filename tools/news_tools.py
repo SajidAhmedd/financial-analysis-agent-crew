@@ -21,13 +21,17 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 import re
 
-# Try to import DuckDuckGo search
+# Try to import DuckDuckGo search (the package was renamed from duckduckgo-search to ddgs)
 try:
-    from duckduckgo_search import DDGS
+    from ddgs import DDGS
     DDGS_AVAILABLE = True
 except ImportError:
-    DDGS_AVAILABLE = False
-    print("Warning: duckduckgo-search not installed. Run: pip install duckduckgo-search")
+    try:
+        from duckduckgo_search import DDGS
+        DDGS_AVAILABLE = True
+    except ImportError:
+        DDGS_AVAILABLE = False
+        print("Warning: ddgs not installed. Run: pip install ddgs")
 
 # Import our config for NewsAPI key
 import sys

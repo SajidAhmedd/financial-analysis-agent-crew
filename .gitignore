@@ -27,3 +27,6 @@ Thumbs.db
 
 # Streamlit
 .streamlit/
+
+# Local Claude Code settings
+.claude/

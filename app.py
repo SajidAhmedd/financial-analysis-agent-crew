@@ -594,7 +594,7 @@ with st.sidebar:
             1. Market Researcher gathers news<br>
             2. Data Analyst crunches numbers<br>
             3. Report Writer creates PDF<br><br>
-            <em>Powered by Groq AI</em>
+            <em>Powered by Mistral, Groq &amp; Gemini</em>
         </div>
     """, unsafe_allow_html=True)
 
@@ -1004,7 +1004,7 @@ elif st.session_state.analysis_complete and st.session_state.analysis_result:
 st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
 st.markdown("""
     <div style="text-align: center; color: #6e7681; font-size: 0.8rem; padding: 20px;">
-        <strong>Financial Agent Crew</strong> · Built with Streamlit & Groq AI<br>
+        <strong>Financial Agent Crew</strong> · Built with Streamlit &amp; multi-provider LLMs<br>
         Multi-Agent System for Automated Stock Analysis
     </div>
 """, unsafe_allow_html=True)

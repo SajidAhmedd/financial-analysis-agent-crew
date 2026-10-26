@@ -39,7 +39,7 @@ NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 # =============================================================================
 
 # Models per provider (override with MISTRAL_MODEL / GROQ_MODEL / GEMINI_MODEL)
-# Defaults live in config/llm_client.py: mistral-small-latest, openai/gpt-oss-20b, gemini-flash-latest
+# Defaults live in config/llm_client.py: mistral-small-latest, openai/gpt-oss-20b, gemini-3-flash-preview
 
 # =============================================================================
 # OTHER SETTINGS
